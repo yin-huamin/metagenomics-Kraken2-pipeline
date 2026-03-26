@@ -1,0 +1,10 @@
+.snakemake/
+
+.envs/
+conda-meta/
+
+README_files/
+01.rawdata/
+02.cleandata/
+03.rm_host/
+04.kraken2/
