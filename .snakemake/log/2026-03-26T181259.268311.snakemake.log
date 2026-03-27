@@ -45,3 +45,68 @@ localrule remove_host:
     threads: 4
     resources: tmpdir=/tmp
 Select jobs to execute...
+[Thu Mar 26 18:28:14 2026]
+Finished jobid: 3 (Rule: remove_host)
+2 of 8 steps (25%) done
+Execute 1 jobs...
+[Thu Mar 26 18:28:14 2026]
+localrule kraken2:
+    input: 03.rm_host/WT-C-12.rmhost.1.fastq, 03.rm_host/WT-C-12.rmhost.2.fastq
+    output: 04.kraken2/WT-C-12.kraken2, 04.kraken2/WT-C-12.k2report
+    log: 04.kraken2/logs/WT-C-12.kraken2.log
+    jobid: 4
+    reason: Missing output files: 04.kraken2/WT-C-12.k2report, 04.kraken2/WT-C-12.kraken2; Input files updated by another job: 03.rm_host/WT-C-12.rmhost.2.fastq, 03.rm_host/WT-C-12.rmhost.1.fastq
+    wildcards: sample=WT-C-12
+    threads: 4
+    resources: tmpdir=/tmp
+Select jobs to execute...
+[Thu Mar 26 18:33:05 2026]
+Finished jobid: 4 (Rule: kraken2)
+3 of 8 steps (38%) done
+Execute 2 jobs...
+[Thu Mar 26 18:33:06 2026]
+localrule bracken:
+    input: 04.kraken2/WT-C-12.k2report
+    output: 04.kraken2/WT-C-12.bracken, 04.kraken2/WT-C-12.breport
+    log: 04.kraken2/logs/WT-C-12.bracken.log
+    jobid: 5
+    reason: Missing output files: 04.kraken2/WT-C-12.breport, 04.kraken2/WT-C-12.bracken; Input files updated by another job: 04.kraken2/WT-C-12.k2report
+    wildcards: sample=WT-C-12
+    resources: tmpdir=/tmp
+[Thu Mar 26 18:33:06 2026]
+localrule multiqc_fastp:
+    input: 02.cleandata/WT-C-12.json, 02.cleandata/WT-C-12.html
+    output: 02.cleandata/fastp_multiqc_report.html
+    log: 02.cleandata/logs/multiqc.log
+    jobid: 2
+    reason: Missing output files: 02.cleandata/fastp_multiqc_report.html; Input files updated by another job: 02.cleandata/WT-C-12.json, 02.cleandata/WT-C-12.html
+    resources: tmpdir=/tmp
+Waiting at most 5 seconds for missing files:
+04.kraken2/WT-C-12.bracken (missing locally)
+04.kraken2/WT-C-12.breport (missing locally)
+RuleException:
+CalledProcessError in file "/mnt/jupiter/yinhm/metagenomics-Kraken2-pipeline/kraken2_workflow.py", line 69:
+Command 'set -euo pipefail;  
+        mkdir -p 02.cleandata/logs
+        multiqc 02.cleandata -n fastp_multiqc_report.html -o 02.cleandata > 02.cleandata/logs/multiqc.log 2>&1' returned non-zero exit status 127.
+[Thu Mar 26 18:33:06 2026]
+Error in rule multiqc_fastp:
+    message: None
+    jobid: 2
+    input: 02.cleandata/WT-C-12.json, 02.cleandata/WT-C-12.html
+    output: 02.cleandata/fastp_multiqc_report.html
+    log: 02.cleandata/logs/multiqc.log (check log file(s) for error details)
+    shell:
+        
+        mkdir -p 02.cleandata/logs
+        multiqc 02.cleandata -n fastp_multiqc_report.html -o 02.cleandata > 02.cleandata/logs/multiqc.log 2>&1
+        
+        (command exited with non-zero exit code)
+MissingOutputException in rule bracken in file "/mnt/jupiter/yinhm/metagenomics-Kraken2-pipeline/kraken2_workflow.py", line 122:
+Job 5  completed successfully, but some output files are missing. Missing files after 5 seconds. This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait:
+04.kraken2/WT-C-12.bracken (missing locally, parent dir contents: logs, WT-C-12.kraken2, WT-C-12.k2report)
+04.kraken2/WT-C-12.breport (missing locally, parent dir contents: logs, WT-C-12.kraken2, WT-C-12.k2report)
+WorkflowError:
+Error exporting conda environment --name '/home/yinhm/app/micromamba/envs/kraken2':
+/usr/bin/bash: 行 1: conda: 未找到命令
+

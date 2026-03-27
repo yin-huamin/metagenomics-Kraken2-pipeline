@@ -37,10 +37,13 @@ rule fastp:
         html=os.path.join(FASTP_DIR, "{sample}.html"),
         json=os.path.join(FASTP_DIR, "{sample}.json")
     threads: config["threads"]["fastp"]
+    params:
+        env=config["envs"]["kraken2"]
     log:
         os.path.join(FASTP_DIR, "logs", "{sample}.fastp.log")
     shell:
         r"""
+        export PATH="{params.env}/bin:$PATH"
         mkdir -p {FASTP_DIR} {FASTP_DIR}/logs
         fastp \
           -i {input.r1} \
@@ -61,13 +64,14 @@ rule multiqc_fastp:
         expand(os.path.join(FASTP_DIR, "{sample}.html"), sample=samples)
     output:
         os.path.join(FASTP_DIR, "fastp_multiqc_report.html")
-    conda:
-        "/home/yinhm/app/micromamba/envs/kraken2"
+    params:
+        env=config["envs"]["kraken2"]
     log:
         os.path.join(FASTP_DIR, "logs", "multiqc.log")
     shell:
         r"""
-        mkdir -p {FASTP_DIR}/logs
+        export PATH="{params.env}/bin:$PATH" && \
+        mkdir -p {FASTP_DIR}/logs && \
         multiqc {FASTP_DIR} -n fastp_multiqc_report.html -o {FASTP_DIR} > {log} 2>&1
         """
 
@@ -82,10 +86,12 @@ rule remove_host:
     threads: config["threads"]["bowtie2"]
     params:
         index=config["host_index"],
-        prefix=os.path.join(RMHOST_DIR, "{sample}.rmhost.fastq")
+        prefix=os.path.join(RMHOST_DIR, "{sample}.rmhost.fastq"),
+        env=config["envs"]["kraken2"]
     shell:
         r"""
-        mkdir -p {RMHOST_DIR}
+        export PATH="{params.env}/bin:$PATH" && \
+        mkdir -p {RMHOST_DIR} && \
         bowtie2 \
           -p {threads} \
           -x {params.index} \
@@ -105,12 +111,14 @@ rule kraken2:
         report=os.path.join(KRAKEN_DIR, "{sample}.k2report")
     threads: config["threads"]["kraken2"]
     params:
-        db=config["kraken2_db"]
+        db=config["kraken2_db"],
+        env=config["envs"]["kraken2"]
     log:
         os.path.join(KRAKEN_DIR, "logs", "{sample}.kraken2.log")
     shell:
         r"""
-        mkdir -p {KRAKEN_DIR} {KRAKEN_DIR}/logs
+        export PATH="{params.env}/bin:$PATH" && \
+        mkdir -p {KRAKEN_DIR} {KRAKEN_DIR}/logs && \
         kraken2 \
           --threads {threads} \
           --db {params.db} \
@@ -127,20 +135,18 @@ rule bracken:
         breport=os.path.join(KRAKEN_DIR, "{sample}.breport")
     params:
         db=config["kraken2_db"],
-        level=config["bracken_level"],
         threshold=config["bracken_threshold"],
-        read_len=config["read_len"]
+        env=config["envs"]["kraken2"]
     log:
         os.path.join(KRAKEN_DIR, "logs", "{sample}.bracken.log")
     shell:
         r"""
+        export PATH="{params.env}/bin:$PATH" && \
         bracken \
           -d {params.db} \
           -i {input.report} \
           -o {output.bracken} \
           -w {output.breport} \
-          -r {params.read_len} \
-          -l {params.level} \
           -t {params.threshold} \
           > {log} 2>&1
         """
@@ -150,12 +156,13 @@ rule breport_to_mpa:
         os.path.join(KRAKEN_DIR, "{sample}.breport")
     output:
         os.path.join(KRAKEN_DIR, "{sample}.bracken.taxoname")
+    params:
+        env=config["envs"]["kraken2"]
     log:
         os.path.join(KRAKEN_DIR, "logs", "{sample}.kreport2mpa.log")
-    conda:
-        "/home/yinhm/app/micromamba/envs/kraken2"
     shell:
         r"""
+        export PATH="{params.env}/bin:$PATH" && \
         kreport2mpa.py \
           -r {input} \
           -o {output} \
@@ -168,13 +175,13 @@ rule combine_mpa:
     output:
         os.path.join(KRAKEN_DIR, "all_sample_merge.txt")
     params:
-        indir=KRAKEN_DIR
-    conda:
-        "/home/yinhm/app/micromamba/envs/kraken2"
+        indir=KRAKEN_DIR,
+        env=config["envs"]["kraken2"]
     log:
         os.path.join(KRAKEN_DIR, "logs", "combine_mpa.log")
     shell:
         r"""
+        export PATH="{params.env}/bin:$PATH" && \
         cd {params.indir} && \
         combine_mpa.py -i *.bracken.taxoname -o all_sample_merge.txt \
         > logs/combine_mpa.log 2>&1

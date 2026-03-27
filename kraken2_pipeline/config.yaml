@@ -2,16 +2,16 @@ raw_dir: "01.rawdata"
 fastp_dir: "02.cleandata"
 rmhost_dir: "03.rm_host"
 kraken_dir: "04.kraken2"
-#results_dir: "05.results"
 
 host_index: "/home/yinhm/projects/database/ref_index/mouseref_bowtie2"
 kraken2_db: "/mnt/venus/database/kraken2-PlusPF-20250728"
 
-read_len: 150
-bracken_level: "S"
 bracken_threshold: 20
 
 threads:
   fastp: 16
   bowtie2: 20
   kraken2: 20
+
+envs:
+  kraken2: "/home/yinhm/app/micromamba/envs/kraken2"

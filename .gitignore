@@ -8,3 +8,6 @@ README_files/
 02.cleandata/
 03.rm_host/
 04.kraken2/
+env/
+README.html
+test_dag.pdf

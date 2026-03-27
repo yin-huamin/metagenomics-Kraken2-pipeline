@@ -57,16 +57,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="README_files/libs/clipboard/clipboard.min.js"></script>
-<script src="README_files/libs/quarto-html/quarto.js"></script>
-<script src="README_files/libs/quarto-html/popper.min.js"></script>
-<script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="README_files/libs/quarto-html/anchor.min.js"></script>
-<link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="README_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="README_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="Readme_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Readme_files/libs/quarto-html/quarto.js"></script>
+<script src="Readme_files/libs/quarto-html/popper.min.js"></script>
+<script src="Readme_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Readme_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Readme_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Readme_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Readme_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Readme_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Readme_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -80,96 +80,101 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="metagenomics-pipeline" class="level1">
-<h1>Metagenomics Pipeline</h1>
-<p>宏基因组测序分析流程整合</p>
+<section id="short-reads-metagenomics-kraken2-pipeline" class="level1">
+<h1>Short Reads Metagenomics Kraken2 Pipeline</h1>
+<p>基于 Snakemake 的二代测序（NGS）宏基因组 short reads 分析流程，主要步骤包括质控（fastp）、去宿主（bowtie2）、物种分类注释（Kraken2 + Bracken）。</p>
 <section id="作者信息" class="level2">
 <h2 class="anchored" data-anchor-id="作者信息">作者信息</h2>
 <ul>
 <li><strong>作者：</strong> Yin Huamin</li>
-<li><strong>日期：</strong> 2026.03.27（持续更新中）</li>
+<li><strong>日期：</strong> 2026.03.27</li>
 <li><strong>邮箱：</strong> yinhm17@126.com</li>
 </ul>
 </section>
-<section id="table-of-contents" class="level2">
-<h2 class="anchored" data-anchor-id="table-of-contents">Table of Contents</h2>
-<p><strong>Short Reads</strong></p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Pipeline</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>kraken2_pipeline</td>
-<td>Kraken2 + Bracken 物种分类注释</td>
-</tr>
-<tr class="even">
-<td>HUMAnN4_pipeline</td>
-<td>功能通路分析</td>
-</tr>
-<tr class="odd">
-<td>MetaPhlAn4_pipeline</td>
-<td>物种组成分析</td>
-</tr>
-<tr class="even">
-<td>assembly_pipeline</td>
-<td>宏基因组组装</td>
-</tr>
-<tr class="odd">
-<td>binning_pipeline</td>
-<td>基因组分箱</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Long Reads</strong></p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Pipeline</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>HiFi-MAGs-pipeline</td>
-<td>HiFi 长读长 MAGs 构建</td>
-</tr>
-<tr class="even">
-<td>assembly_pipeline</td>
-<td>长读长宏基因组组装</td>
-</tr>
-</tbody>
-</table>
+<section id="流程概览" class="level2">
+<h2 class="anchored" data-anchor-id="流程概览">流程概览</h2>
+<pre><code>Raw Reads (.fq.gz)
+    │
+    ▼
+  fastp（质控 + 去接头）
+    │
+    ▼
+  MultiQC（质控报告汇总）
+    │
+    ▼
+  Bowtie2（去宿主序列）
+    │
+    ▼
+  Kraken2（物种分类）
+    │
+    ▼
+  Bracken（物种丰度估计）
+    │
+    ▼
+  kreport2mpa + combine_mpa（结果汇总）</code></pre>
 </section>
 <section id="使用步骤" class="level2">
 <h2 class="anchored" data-anchor-id="使用步骤">使用步骤</h2>
 <section id="创建并激活环境" class="level3">
 <h3 class="anchored" data-anchor-id="创建并激活环境">1. 创建并激活环境</h3>
-<p>每个 pipeline 目录下提供了对应的 <code>environment.yaml</code>，选择 conda 或 micromamba 创建环境：</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># conda</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> env create <span class="at">-f</span> environment.yaml</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate <span class="op">&lt;</span>env_name<span class="op">&gt;</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 或 micromamba</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> create <span class="at">-f</span> environment.yaml</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> activate <span class="op">&lt;</span>env_name<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>使用 conda：</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> env create <span class="at">-f</span> environment.yaml</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate kraken2_workflow</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>或者使用 micromamba：</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> create <span class="at">-f</span> environment.yaml</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">micromamba</span> activate kraken2_workflow</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="修改配置文件" class="level3">
-<h3 class="anchored" data-anchor-id="修改配置文件">2. 修改配置文件</h3>
-<p>根据实际数据和数据库路径，修改对应 pipeline 目录下的 <code>config.yaml</code>。</p>
+<section id="修改-config.yaml-中的路径" class="level3">
+<h3 class="anchored" data-anchor-id="修改-config.yaml-中的路径">2. 修改 config.yaml 中的路径</h3>
+<p>根据你的实际数据和数据库路径，修改 <code>config.yaml</code> 中的以下字段：</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 你的样本文件目录（paired-end reads 命名格式：{sample}_1.fq.gz, {sample}_2.fq.gz）</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">raw_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"01.rawdata"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Bowtie2 宿主基因组索引路径</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">host_index</span><span class="kw">:</span><span class="at"> </span><span class="st">"/path/to/your/host_bowtie2_index"</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Kraken2 数据库路径</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">kraken2_db</span><span class="kw">:</span><span class="at"> </span><span class="st">"/path/to/your/kraken2_database"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="运行流程" class="level3">
 <h3 class="anchored" data-anchor-id="运行流程">3. 运行流程</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">snakemake</span> <span class="at">--snakefile</span> snakemake.py <span class="at">--cores</span> 4</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">snakemake</span> <span class="at">--snakefile</span> kraken2_snakemake.py <span class="at">--cores</span> 4</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>运行前可以使用 dry-run 模式预览将要执行的任务：</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">snakemake</span> <span class="at">--snakefile</span> snakemake.py <span class="at">--cores</span> 4 <span class="at">-n</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<blockquote class="blockquote">
-<p><code>-c 4</code> / <code>--cores 4</code>：指定使用的 CPU 核心数，默认推荐 4，可根据服务器资源调整。</p>
-</blockquote>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">snakemake</span> <span class="at">--snakefile</span> kraken2_snakemake.py <span class="at">--cores</span> 4 <span class="at">-n</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
+</section>
+<section id="输入文件格式" class="level2">
+<h2 class="anchored" data-anchor-id="输入文件格式">输入文件格式</h2>
+<p>样本文件需放置在 <code>raw_dir</code> 指定的目录下，命名格式为：</p>
+<pre><code>{sample}_1.fq.gz
+{sample}_2.fq.gz</code></pre>
+<p>例如：</p>
+<pre><code>01.rawdata/
+├── WT-C-12_1.fq.gz
+├── WT-C-12_2.fq.gz
+├── WT-C-13_1.fq.gz
+└── WT-C-13_2.fq.gz</code></pre>
+</section>
+<section id="输出目录结构" class="level2">
+<h2 class="anchored" data-anchor-id="输出目录结构">输出目录结构</h2>
+<pre><code>02.cleandata/          # fastp 质控结果
+├── {sample}.trimmed_1.fq.gz
+├── {sample}.trimmed_2.fq.gz
+├── {sample}.html      # fastp 单样本报告
+├── {sample}.json
+└── fastp_multiqc_report.html  # MultiQC 汇总报告
+
+03.rm_host/            # 去宿主后的 reads
+├── {sample}.rmhost.1.fastq
+└── {sample}.rmhost.2.fastq
+
+04.kraken2/            # Kraken2 + Bracken 分类结果
+├── {sample}.kraken2          # Kraken2 原始输出
+├── {sample}.k2report         # Kraken2 报告
+├── {sample}.bracken          # Bracken 丰度估计
+├── {sample}.breport          # Bracken 报告
+├── {sample}.bracken.taxoname # MPA 格式结果
+└── all_sample_merge.txt      # 所有样本合并结果</code></pre>
 </section>
 </section>
 
